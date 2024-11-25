@@ -1,0 +1,269 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin: 5px 0;
+}
+
+a {
+    color: #0066CC;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+form label {
+    font-weight: bold;
+}
+
+form input[type="text"],
+form input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+form input[type="submit"] {
+    padding: 10px 15px;
+}
+
+
+/* Hide the up and down arrows in number input */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Styling for the person image */
+.person-image {
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: block;
+}
+
+/* Styling for the person's bio */
+.person-bio {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+
+.flashes {
+    list-style-type: none;
+    padding: 0;
+}
+.flash {
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.flash.warning {
+    background-color: #fffae5;
+    color: #856404;
+    border-color: #ffeeba;
+}
+.flash.danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+.flash.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+.genre-link {
+    color: #1e90ff;
+    text-decoration: none;
+    margin-right: 5px;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+.genre-link:hover {
+    color: #ff4500; /* Highlight color on hover */
+    text-decoration: underline;
+}
+.person-link {
+    color: #1e90ff;
+    text-decoration: none;
+    display: block; /* Ensures each link occupies its line */
+    margin-bottom: 5px; /* Adds spacing between genres */
+    transition: color 0.3s;
+}
+
+.person-link:hover {
+    color: #ff4500; /* Highlight color */
+    text-decoration: underline;
+}
+.movie-poster {
+    width: 80px;
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.movie-table td img {
+    display: block;
+    margin: 0 auto;
+}
+
+.reset-link {
+    text-decoration: none;
+    color: #333;
+    font-size: inherit;
+}
+
+.reset-link:hover {
+    text-decoration: underline;
+    color: #1e90ff; /* Optional hover effect */
+}
+.active-filter {
+    font-weight: bold;
+    color: #ff4500;
+    text-decoration: underline;
+}
+
+
+
+.comments-section {
+    margin-top: 30px;
+    width: 100%;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.comments-title {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.comment-form,
+.reply-form {
+    margin-bottom: 20px;
+}
+
+.comment-textarea,
+.reply-textarea {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 1em;
+    resize: none;
+    box-sizing: border-box;
+}
+
+.comment-submit-button,
+.reply-submit-button,
+.load-more-replies {
+    background-color: #1e90ff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+}
+
+.comment-submit-button:hover,
+.reply-submit-button:hover,
+.load-more-replies:hover {
+    background-color: #0077cc;
+}
+
+.comment {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.comment-header,
+.reply-header {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.comment-author,
+.reply-author {
+    font-weight: bold;
+    color: #333;
+}
+
+.comment-content,
+.reply-content {
+    font-size: 1em;
+    color: #444;
+    margin-top: 5px;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.reaction-form {
+    display: inline;
+}
+
+.reaction-button {
+    background: none;
+    border: none;
+    color: #1e90ff;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+.reaction-button:hover {
+    text-decoration: underline;
+}
+
+.no-comments {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.replies {
+    margin-left: 20px;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 10px;
+    margin-top: 10px;
+}

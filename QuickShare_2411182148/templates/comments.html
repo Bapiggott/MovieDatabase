@@ -1,0 +1,91 @@
+<div class="comments-section">
+    <h2 class="comments-title">Comments</h2>
+
+    <!-- Comment Form -->
+    <form class="comment-form" action="{{ url_for('add_comment') }}" method="POST">
+        <input type="hidden" name="target_type" value="{{ 'movie' if movie_id else 'person' }}">
+        <input type="hidden" name="target_id" value="{{ imdbID if imdbID else person_name }}">
+        <textarea class="comment-textarea" name="content" rows="3" placeholder="Write a comment..." required></textarea>
+        <button class="comment-submit-button" type="submit">Post Comment</button>
+    </form>
+
+    <!-- List of Comments -->
+    <div class="comments-list">
+        {% if comments %}
+            {% for comment in comments %}
+            <div class="comment">
+                <div class="comment-header">
+                    <span class="comment-author">{{ comment['username'] }}</span>
+                    <span class="comment-timestamp">{{ comment['timestamp'] }}</span>
+                </div>
+                <p class="comment-content">{{ comment['content'] }}</p>
+
+                <!-- Like/Dislike Buttons -->
+                <div class="comment-actions">
+                    <form action="{{ url_for('react_to_comment') }}" method="POST" class="reaction-form">
+                        <input type="hidden" name="comment_id" value="{{ comment['id'] }}">
+                        <input type="hidden" name="reaction_type" value="like">
+                        <button class="reaction-button" type="submit">👍 {{ comment['likes'] }}</button>
+                    </form>
+                    <form action="{{ url_for('react_to_comment') }}" method="POST" class="reaction-form">
+                        <input type="hidden" name="comment_id" value="{{ comment['id'] }}">
+                        <input type="hidden" name="reaction_type" value="dislike">
+                        <button class="reaction-button" type="submit">👎 {{ comment['dislikes'] }}</button>
+                    </form>
+                </div>
+
+                <!-- Reply Form -->
+                <form class="reply-form" action="{{ url_for('add_comment') }}" method="POST">
+                    <input type="hidden" name="parent_comment_id" value="{{ comment['id'] }}">
+                    <input type="hidden" name="target_type" value="{{ 'movie' if imdbID else 'person' }}">
+                    <input type="hidden" name="target_id" value="{{ imdbID if imdbID else person_name }}">
+                    <textarea class="reply-textarea" name="content" rows="2" placeholder="Write a reply..." required></textarea>
+                    <button class="reply-submit-button" type="submit">Reply</button>
+                </form>
+
+                <!-- Replies -->
+                <div class="replies" data-comment-id="{{ comment['id'] }}">
+                    {% for reply in comment['replies'][:3] %}
+                    <div class="reply">
+                        <div class="reply-header">
+                            <span class="reply-author">{{ reply['username'] }}</span>
+                            <span class="reply-timestamp">{{ reply['timestamp'] }}</span>
+                        </div>
+                        <p class="reply-content">{{ reply['content'] }}</p>
+                    </div>
+                    {% endfor %}
+                    {% if comment['replies']|length > 3 %}
+                    <button class="load-more-replies" onclick="loadMoreReplies({{ comment['id']|safe }})">Load More Replies</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-comments">No comments yet. Be the first to comment!</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function loadMoreReplies(commentId) {
+        fetch(`{{ url_for('fetch_replies') }}?comment_id=${commentId}`)
+            .then(response => response.json())
+            .then(data => {
+                const repliesContainer = document.querySelector(`.replies[data-comment-id="${commentId}"]`);
+                data.replies.forEach(reply => {
+                    const replyElement = document.createElement('div');
+                    replyElement.classList.add('reply');
+                    replyElement.innerHTML = `
+                        <div class="reply-header">
+                            <span class="reply-author">${reply.username}</span>
+                            <span class="reply-timestamp">${reply.timestamp}</span>
+                        </div>
+                        <p class="reply-content">${reply.content}</p>
+                    `;
+                    repliesContainer.appendChild(replyElement);
+                });
+                document.querySelector(`.load-more-replies[data-comment-id="${commentId}"]`).remove();
+            })
+            .catch(error => console.error('Error loading replies:', error));
+    }
+</script>
