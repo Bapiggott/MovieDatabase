@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flask Movie Database</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="search-bar">
+            <form action="{{ url_for('search') }}" method="get">
+                <input type="text" name="q" placeholder="Search movies or people..." value="{{ request.args.get('q', '') }}">
+                <input type="number" name="year" placeholder="Year" value="{{ request.args.get('year', '') }}">
+                <select name="type">
+                    <option value="all" {% if request.args.get('type') == 'all' %}selected{% endif %}>All</option>
+                    <option value="movie" {% if request.args.get('type') == 'movie' %}selected{% endif %}>Movies</option>
+                    <option value="person" {% if request.args.get('type') == 'person' %}selected{% endif %}>People</option>
+                </select>
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

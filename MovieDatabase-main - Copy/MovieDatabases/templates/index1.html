@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .movie-list-container {
+        margin-top: 20px;
+    }
+
+    .movie-table {
+        width: 100%;
+        border-collapse: collapse;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .movie-table thead th {
+        background-color: #1e90ff;
+        color: white;
+        font-weight: bold;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .movie-table thead th a {
+        color: white;
+        text-decoration: none;
+    }
+
+    .movie-table thead th a:hover {
+        text-decoration: underline;
+    }
+
+    .movie-table tbody tr {
+        border-bottom: 1px solid #ddd;
+    }
+
+    .movie-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .movie-table tbody tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .movie-table td {
+        padding: 10px;
+        font-size: 1em;
+        color: #555;
+        vertical-align: middle;
+    }
+
+    .rating-input {
+        width: 50px;
+        text-align: center;
+        padding: 3px;
+        font-size: 0.9em;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+    }
+
+    .action-buttons {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .action-buttons a {
+        text-decoration: none;
+        color: #1e90ff;
+        border: 1px solid #1e90ff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .action-buttons a:hover {
+        background-color: #1e90ff;
+        color: #fff;
+    }
+</style>
+
+<div class="movie-list-container">
+    <h1>Movie List</h1>
+
+    <table class="movie-table">
+        <thead>
+            <tr>
+                <th><a href="{{ url_for('index', sort_by='title', order=new_order if sort_by == 'title' else 'asc') }}">Title</a></th>
+                <th><a href="{{ url_for('index', sort_by='release_year', order=new_order if sort_by == 'release_year' else 'asc') }}">Release Year</a></th>
+                <th><a href="{{ url_for('index', sort_by='genre', order=new_order if sort_by == 'genre' else 'asc') }}">Genre</a></th>
+                <th><a href="{{ url_for('index', sort_by='rated', order=new_order if sort_by == 'rated' else 'asc') }}">Rated</a></th>
+                <th><a href="{{ url_for('index', sort_by='imdbRating', order=new_order if sort_by == 'imdbRating' else 'asc') }}">IMDb Rating</a></th>
+                <th><a href="{{ url_for('index', sort_by='country', order=new_order if sort_by == 'country' else 'asc') }}">Country</a></th>
+                <th>Director</th>
+                <th>Writer</th>
+                <th>Actors</th>
+                <th><a href="{{ url_for('index', sort_by='user_rating', order=new_order if sort_by == 'user_rating' else 'asc') }}">Your Rating</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movie in movies %}
+            <tr>
+                <td><a href="{{ url_for('movie_detail', movie_id=movie[0]) }}">{{ movie[1] }}</a></td>
+                <td>{{ movie['title'] }}</td>
+                <td>{{ movie['release_year'] }}</td>
+                <td>{{ movie['genre'] }}</td>
+                <td>{{ movie['rated'] }}</td>
+                <td>{{ movie['imdbRating'] }}</td>
+                <td>{{ movie['country'] }}</td>
+                <td>{{ movie['director'] }}</td>
+                <td>{{ movie['writer'] }}</td>
+                <td>{{ movie['actors'] }}</td>
+
+                <td>
+                    <form action="{{ url_for('update_rating', movie_id=movie[0], sort_by=sort_by, order=order) }}" method="POST">
+                        <input type="number" name="user_rating" class="rating-input" step="0.1" min="0" max="10" value="{{ movie[10] }}">
+                        <input type="hidden" name="sort_by" value="{{ sort_by }}">
+                        <input type="hidden" name="order" value="{{ order }}">
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('fetch_movie') }}">Fetch a Movie from OMDb</a>
+        <a href="{{ url_for('update_movies') }}">Update All Movies</a>
+        <a href="{{ url_for('update_people_data') }}">Update All People</a>
+    </div>
+</div>
+{% endblock %}

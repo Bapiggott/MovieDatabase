@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .person-container {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        gap: 30px;
+    }
+
+    .image-container {
+        flex: 0 0 300px; /* Fixed width, won't grow or shrink */
+        max-width: 300px; /* Maximum width */
+    }
+
+    .image-container img {
+        width: 100%;
+        height: auto;
+        max-height: 450px; /* Maximum height */
+        object-fit: cover; /* Maintains aspect ratio */
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .person-details {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .person-bio {
+        font-size: 1.1em;
+        line-height: 1.6;
+        color: #555;
+        margin: 20px 0;
+    }
+
+    .movie-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .movie-list li {
+        margin: 10px 0;
+        font-size: 1.1em;
+    }
+
+    .action-buttons {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .back-button {
+        display: inline-block;
+        font-size: 1.1em;
+        color: #1e90ff;
+        text-decoration: none;
+        border: 1px solid #1e90ff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .back-button:hover {
+        background-color: #1e90ff;
+        color: #fff;
+    }
+</style>
+
+<div class="person-container">
+    {% if image_url %}
+    <div class="image-container">
+        <img src="{{ image_url }}" alt="{{ name }}">
+    </div>
+    {% endif %}
+
+    <div class="person-details">
+        <h1>{{ name }}</h1>
+
+        {% if bio %}
+            <p class="person-bio">{{ bio }}</p>
+        {% endif %}
+
+        {% if birthday %}
+            <p><strong>Birthday:</strong> {{ birthday }}</p>
+        {% endif %}
+
+        {% if birthplace %}
+            <p><strong>Birthplace:</strong> {{ birthplace }}</p>
+        {% endif %}
+
+        <h2>Filmography</h2>
+        <ul class="movie-list">
+            {% for movie in movies %}
+            <li>
+                <a href="{{ url_for('movie_detail', movie_id=movie[0]) }}">{{ movie[1] }}</a> 
+                {% if movie[2] %}- {{ movie[2] }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="action-buttons">
+            <a href="{{ url_for('index') }}" class="back-button">Back to movie list</a>
+            <a href="{{ url_for('update_individual_person', person_id=person_id) }}" class="back-button">Update Person</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
