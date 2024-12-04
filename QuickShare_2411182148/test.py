@@ -1,227 +1,201 @@
 import requests
-from flask import Flask, request, render_template, g, redirect, url_for, session, flash
-import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
-from bs4 import BeautifulSoup
+import re
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Add a secret key for session management
-DATABASE = 'database.db'
-OMDB_API_KEY = 'e45abe68'  # Your OMDb API key
-
-# Function to get a database connection
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row  # Return rows as dictionaries for easier access
-    return db
-
-# Close the database connection at the end of each request
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
-
-@app.before_request
-def require_login():
-    allowed_routes = ['login', 'register']
-    if request.endpoint not in allowed_routes and 'user_id' not in session:
-        return redirect(url_for('login'))
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        hashed_password = generate_password_hash(password)
-
-        db = get_db()
-        cur = db.cursor()
-        try:
-            cur.execute('INSERT INTO User (username, password) VALUES (?, ?)', (username, hashed_password))
-            db.commit()
-            flash('Registration successful! Please log in.', 'success')
-            return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            flash('Username already exists!', 'danger')
-    return render_template('register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        db = get_db()
-        cur = db.cursor()
-        cur.execute('SELECT id, password FROM User WHERE username = ?', (username,))
-        user = cur.fetchone()
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            flash('Login successful!', 'success')
-            return redirect(url_for('index'))
-        flash('Invalid credentials!', 'danger')
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    flash('Logged out successfully!', 'success')
-    return redirect(url_for('login'))
-
-@app.route('/fetch_movie', methods=['GET', 'POST'])
-def fetch_movie():
-    user_id = session['user_id']
-    if request.method == 'POST':
-        title = request.form['title']
-        release_year = request.form['release_year']
-        user_rating = request.form.get('user_rating', type=float)
-
-        # Fetch movie data from OMDb API
-        omdb_url = f'http://www.omdbapi.com/?t={title}&y={release_year}&apikey={OMDB_API_KEY}'
-        response = requests.get(omdb_url)
-        movie_data = response.json()
-
-        if movie_data.get('Response') == 'True':
-            db = get_db()
-            cur = db.cursor()
-
-            # Insert movie data, including user rating and user_id
-            cur.execute('''
-                INSERT INTO Movie (title, release_year, genre, rated, released, runtime, plot, language, country,
-                                   awards, poster, imdbRating, imdbVotes, imdbID, type, totalSeasons, user_rating, user_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                movie_data.get('Title'), movie_data.get('Year'), movie_data.get('Genre'), movie_data.get('Rated'),
-                movie_data.get('Released'), movie_data.get('Runtime'), movie_data.get('Plot'),
-                movie_data.get('Language'), movie_data.get('Country'), movie_data.get('Awards'),
-                movie_data.get('Poster'), movie_data.get('imdbRating'), movie_data.get('imdbVotes'),
-                movie_data.get('imdbID'), movie_data.get('Type'), movie_data.get('totalSeasons'), user_rating, user_id
-            ))
-            movie_id = cur.lastrowid  # Get the ID of the inserted movie
-
-            # Process directors, writers, and actors
-            for role, names in [
-                ('Director', movie_data.get('Director', '')),
-                ('Writer', movie_data.get('Writer', '')),
-                ('Actor', movie_data.get('Actors', ''))
-            ]:
-                for name in names.split(', '):
-                    if name:
-                        person_id = add_person_if_not_exists(db, name, user_id)
-                        if role == 'Actor':
-                            cur.execute('INSERT INTO MovieActor (movie_id, person_id, role) VALUES (?, ?, ?)', (movie_id, person_id, "Actor"))
-                        elif role == 'Director':
-                            cur.execute('INSERT INTO MovieDirector (movie_id, person_id) VALUES (?, ?)', (movie_id, person_id))
-                        elif role == 'Writer':
-                            cur.execute('INSERT INTO MovieWriter (movie_id, person_id) VALUES (?, ?)', (movie_id, person_id))
-
-            db.commit()
-            return redirect(url_for('index'))
-        else:
-            return f"Movie not found: {movie_data.get('Error')}", 404
-
-    return render_template('fetch_movie.html')
-
-@app.route('/')
-def index():
-    user_id = session['user_id']
-    sort_by = request.args.get('sort_by', 'title')
-    order = request.args.get('order', 'asc')
-    new_order = 'desc' if order == 'asc' else 'asc'
-
-    db = get_db()
-    cur = db.cursor()
-
-    query = f'''
-        SELECT 
-            Movie.id, 
-            Movie.title, 
-            Movie.release_year, 
-            Movie.genre, 
-            Movie.rated, 
-            Movie.imdbRating,
-            Movie.country,
-            Movie.user_rating,
-            GROUP_CONCAT(DISTINCT PersonDirector.name) AS director,
-            GROUP_CONCAT(DISTINCT PersonWriter.name) AS writer,
-            GROUP_CONCAT(DISTINCT PersonActor.name) AS actors
-        FROM Movie
-        LEFT JOIN MovieDirector ON Movie.id = MovieDirector.movie_id
-        LEFT JOIN Person AS PersonDirector ON MovieDirector.person_id = PersonDirector.id
-        LEFT JOIN MovieWriter ON Movie.id = MovieWriter.movie_id
-        LEFT JOIN Person AS PersonWriter ON MovieWriter.person_id = PersonWriter.id
-        LEFT JOIN MovieActor ON Movie.id = MovieActor.movie_id
-        LEFT JOIN Person AS PersonActor ON MovieActor.person_id = PersonActor.id
-        WHERE Movie.user_id = ?
-        GROUP BY Movie.id
-        ORDER BY {sort_by} {order}
-    '''
-    cur.execute(query, (user_id,))
-    movies = cur.fetchall()
-
-    return render_template('index.html', movies=movies, sort_by=sort_by, order=order, new_order=new_order)
-
-@app.route('/movie/<int:movie_id>')
-def movie_detail(movie_id):
-    user_id = session['user_id']
-    db = get_db()
-    cur = db.cursor()
-
-    # Fetch movie details
-    cur.execute('''
-        SELECT title, release_year, genre, rated, released, runtime, plot, language, country, awards, poster, imdbRating, imdbVotes, imdbID, type, totalSeasons
-        FROM Movie WHERE id = ? AND user_id = ?
-    ''', (movie_id, user_id))
-    movie = cur.fetchone()
-
-    # Fetch average rating
-    cur.execute('SELECT average_rating FROM MovieRating WHERE movie_id = ?', (movie_id,))
-    average_rating = cur.fetchone()
-
-    return render_template('movie_detail.html', movie=movie, average_rating=average_rating)
-
-def add_person_if_not_exists(db, name, user_id):
-    cur = db.cursor()
-    cur.execute('SELECT id FROM Person WHERE name = ? AND user_id = ?', (name, user_id))
-    person = cur.fetchone()
-
-    if person:
-        return person['id']
-
-    cur.execute('INSERT INTO Person (name, user_id) VALUES (?, ?)', (name, user_id))
-    db.commit()
-    return cur.lastrowid
+"""
+This module handles Wikipedia data extraction for movie-related people (actors, directors, etc.).
+It uses Wikipedia's API to fetch and parse biographical information.
+Key features:
+- Extracts bio, birthday, birthplace, and image from Wikipedia
+- Handles multiple date formats used in Wikipedia
+- Cleans up wiki markup from extracted text
+"""
 
 def fetch_wikipedia_summary(name):
     """
-    Fetch biographical data from Wikipedia.
-    Returns: bio, image_url, birthday, birthplace
+    Main function to extract person data from Wikipedia.
+    Process:
+    1. Search Wikipedia for the person
+    2. Get the page content
+    3. Extract birthday using multiple patterns
+    4. Extract birthplace
+    5. Get bio and image from summary API
     """
-    try:
-        # Format the name for the Wikipedia URL
-        formatted_name = name.replace(' ', '_')
-        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{formatted_name}"
-        response = requests.get(url)
-        
-        if response.status_code == 200:
-            data = response.json()
-            bio = data.get('extract', '')
-            image_url = data.get('thumbnail', {}).get('source', '')
-            
-            # Initialize birthday and birthplace as None
-            birthday = None
-            birthplace = None
-            
-            return bio, image_url, birthday, birthplace
-        else:
-            return None, None, None, None
-            
-    except Exception as e:
-        print(f"Error fetching Wikipedia data: {e}")
-        return None, None, None, None
+    bio, image_url, birthday, birthplace = None, None, None, None
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    # Step 1: Use the Search API to find the exact title
+    search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={name}&format=json"
+    search_response = requests.get(search_url)
+    
+    if search_response.status_code == 200:
+        search_results = search_response.json().get("query", {}).get("search", [])
+        
+        if search_results:
+            correct_title = search_results[0].get("title")
+            print(f"Correct title found: {correct_title}")
+
+            # Step 2: Get the page content
+            content_url = f"https://en.wikipedia.org/w/api.php?action=query&titles={correct_title.replace(' ', '_')}&prop=revisions&rvprop=content&format=json&formatversion=2"
+            content_response = requests.get(content_url)
+            
+            if content_response.status_code == 200:
+                page_content = content_response.json()
+                pages = page_content.get('query', {}).get('pages', [])
+                if pages:
+                    content = pages[0].get('revisions', [{}])[0].get('content', '')
+                    
+                    # List of patterns to match various Wikipedia date formats:
+                    # - {{birth date|YYYY|MM|DD}}
+                    # - {{birth date and age|YYYY|MM|DD}}
+                    # - YYYY-MM-DD
+                    # - DD Month YYYY
+                    # - Month DD, YYYY
+                    # etc.
+                    birth_patterns = [
+                        r"\|\s*birth_date\s*=\s*{{birth date(?:\|df=y)?\|(\d{4})\|(\d{1,2})\|(\d{1,2})}}",
+                        r"\|\s*birth_date\s*=\s*{{birth\s*date\s*and\s*age\|(\d{4})\|(\d{1,2})\|(\d{1,2})}}",
+                        r"\|\s*birth_date\s*=\s*(\d{4})-(\d{2})-(\d{2})",
+                        r"\|\s*birth_date\s*=\s*(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})",
+                        r"\|\s*birth_date\s*=\s*(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})",
+                        r"\|\s*birth_date\s*=\s*{{dob\|(\d{4})\|(\d{1,2})\|(\d{1,2})}}",
+                        r"\|\s*birth_date\s*=\s*{{birth-date\|(\d{1,2})\|(\d{1,2})\|(\d{4})}}",
+                        r"\|\s*birth_date\s*=\s*{{birth year and age\|(\d{4})}}",
+                        r"\|\s*birth_date\s*=\s*{{Birth date\|(\d{4})\|(\d{1,2})\|(\d{1,2})}}",
+                        r"\|\s*birth_date\s*=\s*{{BirthDeathAge\|[^|]*\|(\d{4})\|(\d{1,2})\|(\d{1,2})}}",
+                        r"\|\s*birth\s*=\s*{{birth date\|(\d{4})\|(\d{1,2})\|(\d{1,2})}}",
+                        r"\|\s*birth\s*=\s*(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})",
+                        r"born\s+(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})",
+                        r"born\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})",
+                    ]
+                    
+                    months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                            'July', 'August', 'September', 'October', 'November', 'December']
+                    
+                    for pattern in birth_patterns:
+                        match = re.search(pattern, content, re.IGNORECASE)
+                        if match:
+                            groups = match.groups()
+                            if len(groups) == 3:
+                                if groups[0] in months:
+                                    # Format: Month DD YYYY
+                                    month = groups[0]
+                                    day = int(groups[1])
+                                    year = groups[2]
+                                elif groups[1] in months:
+                                    # Format: DD Month YYYY
+                                    day = int(groups[0])
+                                    month = groups[1]
+                                    year = groups[2]
+                                else:
+                                    # Format: YYYY MM DD
+                                    year = groups[0]
+                                    month = months[int(groups[1])-1]
+                                    day = int(groups[2])
+                                
+                                birthday = f"{month} {day}, {year}"
+                                break
+                    
+                    # After trying the patterns, add this section for better fallback handling:
+                    if not birthday:
+                        # Try to find date in the content text
+                        date_patterns = [
+                            r"born\s+(?:on\s+)?(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})",
+                            r"born\s+(?:on\s+)?(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})",
+                            r"\[\[(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})\]\]"
+                        ]
+                        
+                        for pattern in date_patterns:
+                            match = re.search(pattern, content, re.IGNORECASE)
+                            if match:
+                                groups = match.groups()
+                                if groups[1] in months:  # DD Month YYYY
+                                    day = int(groups[0])
+                                    month = groups[1]
+                                    year = groups[2]
+                                else:  # Month DD YYYY
+                                    month = groups[0]
+                                    day = int(groups[1])
+                                    year = groups[2]
+                                birthday = f"{month} {day}, {year}"
+                                break
+
+                        if not birthday:
+                            # Try to find just the year
+                            year_patterns = [
+                                r"\|\s*birth_year\s*=\s*(\d{4})",
+                                r"born\s+in\s+(\d{4})",
+                                r"\(\s*born\s+(?:in\s+)?(\d{4})\s*\)",
+                                r"\[\[(\d{4})\]\]\s*births",
+                            ]
+                            
+                            for pattern in year_patterns:
+                                year_match = re.search(pattern, content, re.IGNORECASE)
+                                if year_match:
+                                    year = year_match.group(1)
+                                    birthday = f"Unknown Date, {year}"
+                                    break
+
+                    # Add this at the end of the function to clean up any remaining wiki markup
+                    if birthday:
+                        birthday = re.sub(r'\[\[([^|\]]*?)(?:\|[^\]]*?)?\]\]', r'\1', birthday)  # Clean wiki links
+                        birthday = re.sub(r'[\[\]{}]', '', birthday)  # Remove remaining brackets
+                        birthday = birthday.strip()
+                    
+                    # Patterns to extract birthplace from different Wikipedia infobox formats
+                    birthplace_patterns = [
+                        r"\|\s*birth_place\s*=\s*([^|\n{]+)",
+                        r"\|\s*birthplace\s*=\s*([^|\n{]+)",
+                        r"\|\s*placeofbirth\s*=\s*([^|\n{]+)"
+                    ]
+                    
+                    for pattern in birthplace_patterns:
+                        birthplace_match = re.search(pattern, content, re.IGNORECASE)
+                        if birthplace_match:
+                            birthplace = birthplace_match.group(1).strip()
+                            # Clean up birthplace text
+                            birthplace = re.sub(r'\[\[([^|\]]*?)(?:\|[^\]]*?)?\]\]', r'\1', birthplace)  # Handle wiki links
+                            birthplace = re.sub(r'[\[\]{}]', '', birthplace)  # Remove remaining brackets
+                            birthplace = re.sub(r'<[^>]+>', '', birthplace)   # Remove HTML tags
+                            birthplace = re.sub(r'\s+', ' ', birthplace)      # Normalize whitespace
+                            birthplace = birthplace.strip()
+                            break
+
+            # Step 3: Get the summary and image
+            summary_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{correct_title.replace(' ', '_')}"
+            summary_response = requests.get(summary_url)
+            
+            if summary_response.status_code == 200:
+                summary_data = summary_response.json()
+                bio = summary_data.get('extract')
+                image_url = summary_data.get('thumbnail', {}).get('source')
+                
+                # If we got a larger thumbnail, get the original image
+                if image_url:
+                    image_url = image_url.replace('/thumb/', '/').split('/')
+                    image_url = '/'.join(image_url[:-1])  # Remove the thumbnail size specification
+
+    return bio, image_url, birthday, birthplace
+
+def test_fetch_person_data():
+    test_names = [
+        "Hyun Bin",
+        "Son Ye-jin",
+        "Tom Cruise",
+        "Steven Spielberg",
+        "Song Joong-ki",
+        "Park Seo-joon",
+        "Sam Neill",
+        "Morgan Freeman",
+        "Anthony Hopkins",
+        "Helen Mirren"
+    ]
+    
+    for name in test_names:
+        print(f"\nTesting fetch for: {name}")
+        bio, image_url, birthday, birthplace = fetch_wikipedia_summary(name)
+        print(f"Birthday: {birthday}")
+        print(f"Birthplace: {birthplace}")
+        print(f"Has image: {'Yes' if image_url else 'No'}")
+        print(f"Bio length: {len(bio) if bio else 0}")
+
+if __name__ == "__main__":
+    test_fetch_person_data()
