@@ -1,4 +1,0 @@
-Flask
-Flask_SQLAlchemy
-requests
-beautifulsoup4
