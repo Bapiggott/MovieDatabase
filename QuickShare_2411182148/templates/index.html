@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .movie-list-container {
+        margin-top: 20px;
+    }
+
+    .movie-table {
+        width: 100%;
+        border-collapse: collapse;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .movie-table thead th {
+        background-color: #1e90ff;
+        color: white;
+        font-weight: bold;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .movie-table thead th a {
+        color: white;
+        text-decoration: none;
+    }
+
+    .movie-table thead th a:hover {
+        text-decoration: underline;
+    }
+
+    .movie-table tbody tr {
+        border-bottom: 1px solid #ddd;
+    }
+
+    .movie-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .movie-table tbody tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .movie-table td {
+        padding: 10px;
+        font-size: 1em;
+        color: #555;
+        vertical-align: middle;
+    }
+
+    .rating-input {
+        width: 50px;
+        text-align: center;
+        padding: 3px;
+        font-size: 0.9em;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+    }
+
+    .action-buttons {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .action-buttons a {
+        text-decoration: none;
+        color: #1e90ff;
+        border: 1px solid #1e90ff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .action-buttons a:hover {
+        background-color: #1e90ff;
+        color: #fff;
+    }
+
+    .search-bar {
+        margin: 20px 0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .search-bar input[type="text"],
+    .search-bar input[type="number"] {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .search-bar select {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .delete-button {
+        background-color: #ff4444;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .delete-button:hover {
+        background-color: #cc0000;
+    }
+</style>
+
+<div class="movie-list-container">
+    <h1><a href="{{ url_for('index') }}" class="reset-link">{{ username }}'s Movie List</a></h1>
+
+    <div class="search-bar">
+        <form action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
+            <select name="type">
+                <option value="all" {% if request.args.get('type') == 'all' %}selected{% endif %}>All</option>
+                <option value="movie" {% if request.args.get('type') == 'movie' %}selected{% endif %}>Movies</option>
+                <option value="person" {% if request.args.get('type') == 'person' %}selected{% endif %}>People</option>
+            </select>
+            <input type="number" name="year" placeholder="Year" value="{{ request.args.get('year', '') }}">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <table class="movie-table">
+        <thead>
+            <tr>
+                <th>Poster</th>
+                <th><a href="{{ url_for('index', sort_by='title', order=new_order if sort_by == 'title' else 'asc, genre=genre_filter, country=country_filter') }}">Title</a></th>
+                <th><a href="{{ url_for('index', sort_by='release_year', order=new_order if sort_by == 'release_year' else 'asc', genre=genre_filter, country=country_filter) }}">Release Year</a></th>
+                <th><a href="{{ url_for('index', sort_by='genre', order=new_order if sort_by == 'genre' else 'asc', genre=genre_filter, country=country_filter) }}">Genre</a></th>
+                <th><a href="{{ url_for('index', sort_by='rated', order=new_order if sort_by == 'rated' else 'asc', genre=genre_filter, country=country_filter) }}">Rated</a></th>
+                <th><a href="{{ url_for('index', sort_by='imdbRating', order=new_order if sort_by == 'imdbRating' else 'asc', genre=genre_filter, country=country_filter) }}">IMDb Rating</a></th>
+                <th><a href="{{ url_for('index', sort_by='country', order=new_order if sort_by == 'country' else 'asc', genre=genre_filter, country=country_filter) }}">Country</a></th>
+                <th>Director</th>
+                <th>Writer</th>
+                <th>Actors</th>
+                <th><a href="{{ url_for('index', sort_by='user_rating', order=new_order if sort_by == 'user_rating' else 'asc', genre=genre_filter, country=country_filter) }}">Your Rating</a></th>
+                <th><a href="{{ url_for('index', sort_by='average_rating', order=new_order if sort_by == 'average_rating' else 'asc', genre=genre_filter, country=country_filter) }}">Average Rating</a></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movie in movies %}
+            <tr>
+                <td>
+                    {% if movie['poster'] %}
+                        <img src="{{ movie['poster'] }}" alt="Poster of {{ movie['title'] }}" class="movie-poster">
+                    {% else %}
+                        <!-- Leave blank if no poster -->
+                    {% endif %}
+                </td>
+                <td><a href="{{ url_for('movie_detail', movie_id=movie['id']) }}" class="person-link">{{ movie['title'] }}</a></td>
+                <td>{{ movie['release_year'] }}</td>
+                <td>
+                    {% for genre in movie['genre'].split(', ') %}
+                        <a href="{{ url_for('index', genre=genre if genre != genre_filter else None, country=country_filter, sort_by=sort_by, order=order) }}" class="person-link">{{ genre }}</a><br>
+                    {% endfor %}
+                </td>                                     
+                <td>{{ movie['rated'] }}</td>
+                <td>{{ movie['imdbRating'] }}</td>
+                <td>
+                    {% for country in movie['country'].split(', ') %}
+                        <a href="{{ url_for('index', country=country if country != country_filter else None, genre=genre_filter, sort_by=sort_by, order=order) }}" class="person-link">{{ country }}</a><br>
+                    {% endfor %}
+                </td>            
+                <td>
+                    <ul class="names-list">
+                        {% if movie['director'] %}
+                            {% for pair in movie['director'].split(',') %}
+                                {% set id, name = pair.split(':', 1) %}
+                                <li><a href="{{ url_for('person_detail', person_id=id) }}" class="person-link">{{ name }}</a></li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </td>                
+                <td>
+                    <ul class="names-list">
+                        {% if movie['writer'] %}
+                            {% for pair in movie['writer'].split(',') %}
+                                {% set id, name = pair.split(':', 1) %}
+                                <li><a href="{{ url_for('person_detail', person_id=id) }}" class="person-link">{{ name }}</a></li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </td>                
+                <td>
+                    <ul class="names-list">
+                        {% if movie['actors'] %}
+                            {% for pair in movie['actors'].split(',') %}
+                                {% set id, name = pair.split(':', 1) %}
+                                <li><a href="{{ url_for('person_detail', person_id=id) }}" class="person-link">{{ name }}</a></li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </td>
+                
+                <td>
+                    <form action="{{ url_for('update_rating', movie_id=movie['id'], sort_by=sort_by, order=order) }}" method="POST">
+                        <input type="number" name="user_rating" class="rating-input" step="0.1" min="0" max="10" value="{{ movie['user_rating'] }}">
+                        <input type="hidden" name="sort_by" value="{{ sort_by }}">
+                        <input type="hidden" name="order" value="{{ order }}">
+                    </form>
+                </td>
+                <td>{{ movie['average_rating'] if movie['average_rating'] is not none else 'N/A' }}</td>
+                <td>
+                    <form action="{{ url_for('delete_movie', movie_id=movie['id']) }}" method="POST" 
+                          onsubmit="return confirm('Are you sure you want to delete this movie?');">
+                        <button type="submit" class="delete-button">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('fetch_movie') }}">Fetch a Movie from OMDb</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+</div>
+{% endblock %}
