@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1> Fetch Movie Data</h1>
+<form method="post">
+    <label>Title:</label><br>
+    <input type="text" name="title" required><br>
+    <label>Release Year:</label><br>
+    <input type="number" name="release_year" required><br>
+    <label>Your Rating:</label><br>
+    <input type="number" name="user_rating" step="0.1" min="0" max="10"><br><br>
+    <input type="submit" value="Fetch Movie">
+</form>
+<a href="{{ url_for('index') }}">Back to movie list</a>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="movie-list-container">
+    <h1 class="cabin-sketch">
+        <a href="{{ url_for('index') }}" class="reset-link">{{ username }}'s Movie Vault</a>
+    </h1>
+
+    <div class="search-bar">
+        <form action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
+            <select name="type">
+                <option value="all" {% if request.args.get('type') == 'all' %}selected{% endif %}>All</option>
+                <option value="movie" {% if request.args.get('type') == 'movie' %}selected{% endif %}>Movies</option>
+                <option value="person" {% if request.args.get('type') == 'person' %}selected{% endif %}>People</option>
+            </select>
+            <input type="number" name="year" placeholder="Year" value="{{ request.args.get('year', '') }}">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

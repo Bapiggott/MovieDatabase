@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="search-results">
+    <h1>Search Results</h1>
+    
+    {% if results %}
+        <div class="results-list">
+            {% for result in results %}
+                {% if result.type == 'movie' %}
+                    <div class="result-item movie">
+                        <h3><a href="{{ url_for('movie_detail', movie_id=result.data[0]) }}">{{ result.data[1] }} ({{ result.data[2] }})</a></h3>
+                        {% if result.data[3] %}
+                            <p>Genre: {{ result.data[3] }}</p>
+                        {% endif %}
+                        {% if result.data[4] %}
+                            <p>Rated: {{ result.data[4] }}</p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="result-item person">
+                        <h3><a href="{{ url_for('person_detail', person_id=result.data[0]) }}">{{ result.data[1] }}</a></h3>
+                        {% if result.data[2] %}
+                            <p>Birthday: {{ result.data[2] }}</p>
+                        {% endif %}
+                        {% if result.data[3] %}
+                            <p>Birthplace: {{ result.data[3] }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}" class="back-button">Back to movie list</a>
+</div>
+{% endblock %}

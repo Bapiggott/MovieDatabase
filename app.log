@@ -1,0 +1,46 @@
+2024-11-19 21:51:19,697 [DEBUG] Checking for existing movie with imdbID: tt2203308, user_id: 1
+2024-11-19 21:51:19,697 [DEBUG] Existing movie: None
+2024-11-19 21:51:19,697 [INFO] 127.0.0.1 - - [19/Nov/2024 21:51:19] "[33mPOST /fetch_movie HTTP/1.1[0m" 404 -
+2024-11-19 21:51:26,170 [INFO] 127.0.0.1 - - [19/Nov/2024 21:51:26] "GET /fetch_movie HTTP/1.1" 200 -
+2024-11-19 21:51:43,636 [INFO]  * Detected change in 'c:\\Users\\brett\\Downloads\\QuickShare_2411182148\\app.py', reloading
+2024-11-19 21:51:47,521 [DEBUG] Checking for existing movie with imdbID: tt2203308, user_id: 1
+2024-11-19 21:51:47,521 [DEBUG] Existing movie: None
+2024-11-19 21:51:47,521 [DEBUG] No duplicate movie found.
+2024-11-19 21:51:47,525 [INFO] 127.0.0.1 - - [19/Nov/2024 21:51:47] "[35m[1mPOST /fetch_movie HTTP/1.1[0m" 500 -
+2024-11-19 21:51:47,610 [INFO] 127.0.0.1 - - [19/Nov/2024 21:51:47] "GET /fetch_movie?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2024-11-19 21:51:47,610 [INFO] 127.0.0.1 - - [19/Nov/2024 21:51:47] "GET /fetch_movie?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2024-11-19 21:51:47,616 [INFO] 127.0.0.1 - - [19/Nov/2024 21:51:47] "GET /fetch_movie?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2024-11-19 21:51:47,626 [INFO] 127.0.0.1 - - [19/Nov/2024 21:51:47] "GET /fetch_movie?__debugger__=yes&cmd=resource&f=console.png&s=YTTm7XgmTyluNR3yVyOp HTTP/1.1" 200 -
+2024-11-19 21:56:36,545 [INFO]  * Detected change in 'c:\\Users\\brett\\Downloads\\QuickShare_2411182148\\app.py', reloading
+2024-11-19 21:56:51,861 [DEBUG] Checking for existing movie with imdbID: tt2203308, user_id: 1
+2024-11-19 21:56:51,861 [DEBUG] Existing movie: None
+2024-11-19 21:56:51,866 [DEBUG] No duplicate movie found.
+2024-11-19 21:56:51,871 [DEBUG] Starting new HTTPS connection (1): en.wikipedia.org:443
+2024-11-19 21:56:52,021 [DEBUG] https://en.wikipedia.org:443 "GET /api/rest_v1/page/summary/Mohit_Suri HTTP/11" 200 772
+2024-11-19 21:56:52,029 [DEBUG] Starting new HTTPS connection (1): en.wikipedia.org:443
+2024-11-19 21:56:52,179 [DEBUG] https://en.wikipedia.org:443 "GET /api/rest_v1/page/summary/Shagufta_Rafique HTTP/11" 200 494
+2024-11-19 21:56:52,186 [DEBUG] Starting new HTTPS connection (1): en.wikipedia.org:443
+2024-11-19 21:56:52,591 [DEBUG] https://en.wikipedia.org:443 "GET /api/rest_v1/page/summary/Aditya_Roy_Kapoor HTTP/11" 302 0
+2024-11-19 21:56:52,633 [DEBUG] https://en.wikipedia.org:443 "GET /api/rest_v1/page/summary/Aditya_Roy_Kapur HTTP/11" 200 889
+2024-11-19 21:56:52,636 [DEBUG] Starting new HTTPS connection (1): en.wikipedia.org:443
+2024-11-19 21:56:52,755 [DEBUG] https://en.wikipedia.org:443 "GET /api/rest_v1/page/summary/Shraddha_Kapoor HTTP/11" 200 751
+2024-11-19 21:56:52,761 [DEBUG] Starting new HTTPS connection (1): en.wikipedia.org:443
+2024-11-19 21:56:52,905 [DEBUG] https://en.wikipedia.org:443 "GET /api/rest_v1/page/summary/Shaad_Randhawa HTTP/11" 200 676
+2024-11-19 21:56:52,931 [INFO] 127.0.0.1 - - [19/Nov/2024 21:56:52] "[32mPOST /fetch_movie HTTP/1.1[0m" 302 -
+2024-11-19 21:56:52,952 [INFO] 127.0.0.1 - - [19/Nov/2024 21:56:52] "GET / HTTP/1.1" 200 -
+2024-11-19 21:56:53,030 [INFO] 127.0.0.1 - - [19/Nov/2024 21:56:53] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2024-11-19 21:56:54,556 [INFO] 127.0.0.1 - - [19/Nov/2024 21:56:54] "GET /movie/1 HTTP/1.1" 200 -
+2024-11-19 21:56:54,595 [INFO] 127.0.0.1 - - [19/Nov/2024 21:56:54] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2024-11-19 21:56:55,764 [INFO] 127.0.0.1 - - [19/Nov/2024 21:56:55] "GET /person/3 HTTP/1.1" 200 -
+2024-11-19 21:56:55,796 [INFO] 127.0.0.1 - - [19/Nov/2024 21:56:55] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2024-11-19 21:57:00,446 [INFO] 127.0.0.1 - - [19/Nov/2024 21:57:00] "GET /fetch_movie HTTP/1.1" 200 -
+2024-11-19 21:57:00,484 [INFO] 127.0.0.1 - - [19/Nov/2024 21:57:00] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2024-11-19 21:57:05,314 [DEBUG] Starting new HTTP connection (1): www.omdbapi.com:80
+2024-11-19 21:57:05,370 [DEBUG] http://www.omdbapi.com:80 "GET /?t=aashiqui%202&y=2013&apikey=e45abe68 HTTP/11" 200 None
+2024-11-19 21:57:05,374 [DEBUG] Checking for existing movie with imdbID: tt2203308, user_id: 1
+2024-11-19 21:57:05,374 [DEBUG] Existing movie: <sqlite3.Row object at 0x000001F32CA2AC20>
+2024-11-19 21:57:05,374 [DEBUG] No duplicate movie found.
+2024-11-19 21:57:05,375 [INFO] 127.0.0.1 - - [19/Nov/2024 21:57:05] "[32mPOST /fetch_movie HTTP/1.1[0m" 302 -
+2024-11-19 21:57:05,382 [INFO] 127.0.0.1 - - [19/Nov/2024 21:57:05] "GET / HTTP/1.1" 200 -
+2024-11-19 21:57:05,423 [INFO] 127.0.0.1 - - [19/Nov/2024 21:57:05] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2024-11-19 22:01:29,430 [INFO]  * Detected change in 'c:\\Users\\brett\\Downloads\\QuickShare_2411182148\\app.py', reloading
